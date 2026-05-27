@@ -1,0 +1,377 @@
+<?xml version="1.0" encoding="utf-8"?>
+<UserControl
+    x:Class="AutoSales.Views.DashboardView"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:vm="using:AutoSales.ViewModels"
+    xmlns:models="using:AutoSales.Models"
+    xmlns:cnv="using:AutoSales.Converters"
+    xmlns:igc="using:Infragistics.Controls"
+    xmlns:ig="using:Infragistics.Controls.Charts"
+    xmlns:igMaps="using:Infragistics.Controls.Maps"
+    xmlns:igGrid="using:Infragistics.Controls.Grids"
+    xmlns:igGauge="using:Infragistics.Controls.Gauges"
+    mc:Ignorable="d"
+    Loaded="OnLoaded">
+
+    <UserControl.Resources>
+        <cnv:IntervalConverter x:Key="IntervalConverter" />
+        <cnv:MeasureTypeStringFormatConverter x:Key="MeasureFormatConverter" />
+        <cnv:ValueToStringFormatConverter x:Key="ValueFormatConverter" />
+        <cnv:BoolToVisibilityConverter x:Key="BoolToVisibilityConverter" />
+        <cnv:DateConverter x:Key="DateConverter" />
+        <cnv:BoolToColorConverter x:Key="BoolToColorConverter" />
+
+        <DataTemplate x:Key="MapToolTip">
+            <StackPanel Background="Transparent" Orientation="Horizontal">
+                <TextBlock Text="{Binding Item.Name}" Foreground="Black"></TextBlock>
+                <TextBlock Text=": " Foreground="Black"></TextBlock>
+                <TextBlock Text="{Binding Item.RevenueFraction}" Foreground="Black"></TextBlock>
+            </StackPanel>
+        </DataTemplate>
+    </UserControl.Resources>
+
+    <!-- Mirrors the WPF original LayoutRoot:
+         columns = (2* min 700, [splitter omitted], 480 right panel)
+         rows    = (5* min 400 map, [splitter omitted], 2* bottom filter+chart)
+         right panel spans both rows. -->
+    <Grid x:Name="LayoutRoot" Background="{ThemeResource AppBackgroundBrush}" Padding="{ThemeResource CardPadding}" RowSpacing="{ThemeResource MediumGap}" ColumnSpacing="{ThemeResource MediumGap}">
+        
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*" MinWidth="700" />
+            <ColumnDefinition Width="*" MinWidth="480"/>
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="5*" MinHeight="400" />
+            <RowDefinition Height="2*" />
+        </Grid.RowDefinitions>
+
+        <Grid Grid.ColumnSpan="2"  ColumnSpacing="48">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <Grid ColumnSpacing="{ThemeResource LargeGap}">
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto" />
+                    <ColumnDefinition Width="Auto" />
+                </Grid.ColumnDefinitions>
+
+                <!-- Regions -->
+                <Grid Grid.Column="0" HorizontalAlignment="Left" ColumnSpacing="{ThemeResource SmallGap}">
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="Auto" />
+                        <ColumnDefinition Width="400" />
+                    </Grid.ColumnDefinitions>
+                    <TextBlock Grid.Column="0" Text="Showing" Style="{ThemeResource SmallTextStyle}"/>
+                    <!-- Breadcrumbs: a row of buttons bound to BreadCrumbs (DashboardViewModel),
+                             one per drill-down level. Clicking any one navigates back to that level
+                             via SelectedBreadCrumb on the VM, which cascades the selection unwind. -->
+                    <ItemsControl Grid.Column="1" ItemsSource="{Binding BreadCrumbs}" Background="Transparent">
+                        <ItemsControl.ItemsPanel>
+                            <ItemsPanelTemplate>
+                                <StackPanel Orientation="Horizontal" />
+                            </ItemsPanelTemplate>
+                        </ItemsControl.ItemsPanel>
+                        <ItemsControl.ItemTemplate>
+                            <DataTemplate>
+                                <Button Content="{Binding Label}" Tag="{Binding}"
+                                            Click="OnBreadCrumbClicked" 
+                                            Margin="0,0,4,0" />
+                            </DataTemplate>
+                        </ItemsControl.ItemTemplate>
+                    </ItemsControl>
+                </Grid>
+            </Grid>
+
+            <StackPanel Grid.Column="1" Orientation="Horizontal" Spacing="{ThemeResource SmallGap}">
+                <TextBlock Text="Trailing:" Style="{ThemeResource SmallTextStyle}"
+                               VerticalAlignment="Center"/>
+                <StackPanel Grid.Column="1" Orientation="Horizontal" 
+                            VerticalAlignment="Center" Spacing="0" 
+                            CornerRadius="{ThemeResource SegmentedBtnContainerRadius}" 
+                            Background="{StaticResource SegmentedButtonContainer}" Padding="4">
+                    <ToggleButton x:Name="PeriodYear"    Content="Year"    Style="{StaticResource SegmentedToggleButtonStyle}" Click="PeriodToggled" Tag="YearToDate" />
+                    <ToggleButton x:Name="PeriodQuarter" Content="Quarter" Style="{StaticResource SegmentedToggleButtonStyle}" Click="PeriodToggled" Tag="Quarter" IsChecked="True" />
+                    <ToggleButton x:Name="PeriodMonth"   Content="Month"   Style="{StaticResource SegmentedToggleButtonStyle}" Click="PeriodToggled" Tag="Month" />
+                    <ToggleButton x:Name="PeriodWeek"    Content="Week"    Style="{StaticResource SegmentedToggleButtonStyle}" Click="PeriodToggled" Tag="Week" />
+                </StackPanel>
+            </StackPanel>
+            <StackPanel Grid.Column="2" Orientation="Horizontal" Spacing="{ThemeResource SmallGap}">
+                <TextBlock Text="Measure" Style="{ThemeResource SmallTextStyle}"/>
+                <StackPanel Orientation="Horizontal" HorizontalAlignment="Right" VerticalAlignment="Center" 
+                            Spacing="0" CornerRadius="{ThemeResource SegmentedBtnContainerRadius}" 
+                            Background="{StaticResource SegmentedButtonContainer}" Padding="4">
+
+                    <ToggleButton x:Name="MeasureRevenue" Content="Revenue" Style="{StaticResource SegmentedToggleButtonStyle}" IsChecked="True" Click="MeasureToggled" Tag="Revenue" />
+                    <ToggleButton x:Name="MeasureVolume"  Content="Volume"  Style="{StaticResource SegmentedToggleButtonStyle}"  Click="MeasureToggled" Tag="Volume" />
+                </StackPanel>
+            </StackPanel>
+        </Grid>
+
+
+
+        <!-- =============================================================== -->
+        <!-- TOP LEFT: Map with Select-Region overlay + Trailing toggle group -->
+        <!-- =============================================================== -->
+        <Grid x:Name="DealersMapGrid" Grid.Row="1" Grid.Column="0"  CornerRadius="{ThemeResource CardCornerRadius}" Background="{ThemeResource CardBackground}" BorderBrush="{ThemeResource CardBorderBrush}" BorderThickness="{ThemeResource CardBorderThickness}">
+            <igMaps:XamGeographicMap x:Name="GeoMap"
+                                     WindowRect="0,0,1,1"
+                                     HighlightingMode="FadeOthersSpecific"
+                                     HighlightingBehavior="NearestItemsAndSeries"
+                                     HighlightingFadeOpacity=".4"
+                                     SelectionMode="SelectionColorOutline"
+                                     SelectionBehavior="PerSeriesSingleSelect"
+                                     BackgroundContent="{x:Null}"
+                                     IsHitTestVisible="True">
+                <igMaps:XamGeographicMap.Series>
+                    <igMaps:GeographicShapeSeries x:Name="RegionsSeries"
+                                                  Title="Region"
+                                                  ItemSearchMode="ClosestPointOnClosestShape"
+                                                  Brush="{StaticResource ShapeFill20}"
+                                                  Outline="{StaticResource AppRegionStrokeBrush}"
+                                                  Thickness="1"
+                                                  ItemsSource="{Binding VisibleRegions}"
+                                                  ShapeMemberPath="Shape"
+                                                  Visibility="{Binding RegionSeriesVisibility, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                  IsHitTestVisible="True" ChartToolTipUpdating="RegionsSeries_ChartToolTipUpdating" />
+                    <igMaps:GeographicShapeSeries x:Name="StatesSeries"
+                                                  Title="State"
+                                                  ItemSearchMode="ClosestPointOnClosestShape"
+                                                  Brush="{StaticResource ShapeFill30}"
+                                                  Outline="{StaticResource AppRegionStrokeBrush}"
+                                                  Thickness="1"
+                                                  ItemsSource="{Binding VisibleUSStates}"
+                                                  ShapeMemberPath="Shape"
+                                                  Visibility="{Binding USStatesSeriesVisibility, Converter={StaticResource BoolToVisibilityConverter}}"
+                                                  IsHitTestVisible="True" ChartToolTipUpdating="StatesSeries_ChartToolTipUpdating" />
+                    <igMaps:GeographicProportionalSymbolSeries x:Name="DealersSeries"
+                                                   Title="Dealer"
+                                                   ItemsSource="{Binding DealersForMap}"
+                                                   Thickness="1"
+                                                   LongitudeMemberPath="Longitude"
+                                                   LatitudeMemberPath="Latitude"
+                                                   FillMemberPath="RevenueFraction"
+                                                   RadiusMemberPath="RevenueFraction"
+                                                   MarkerFillMode="Normal"
+                                                   MarkerOutlineMode="Normal"
+                                                   MarkerType="Circle"
+                                                   MarkerOutline="{StaticResource MarkerOutline}"
+                                                   MarkerThickness=".5"    
+                                                   MarkerFillOpacity=".6"
+                                                   ChartToolTipUpdating="DealersSeries_ChartToolTipUpdating"
+                                                   MarkerBrush="{StaticResource MarkerBrush}"
+                                                   IsHitTestVisible="True"  >
+                        <igMaps:GeographicProportionalSymbolSeries.RadiusScale>
+                            <ig:SizeScale MaximumValue="40" MinimumValue="15" IsLogarithmic="False"  />
+                        </igMaps:GeographicProportionalSymbolSeries.RadiusScale>
+                        <igMaps:GeographicProportionalSymbolSeries.FillScale>
+                            <ig:ValueBrushScale MaximumValue="{Binding MaxRevenueFraction}"
+                            MinimumValue="{Binding MinRevenueFraction}"
+                            IsLogarithmic="False" >
+                                <ig:ValueBrushScale.Brushes>
+                                    <igc:BrushCollection>
+                                        <SolidColorBrush Color="{StaticResource Primary500}" />
+                                        <SolidColorBrush Color="{StaticResource Primary100}" />
+                                    </igc:BrushCollection>
+                                </ig:ValueBrushScale.Brushes>
+                            </ig:ValueBrushScale>
+                        </igMaps:GeographicProportionalSymbolSeries.FillScale>
+                    </igMaps:GeographicProportionalSymbolSeries>
+                    <!--<ig:DataToolTipLayer GroupingMode="Individual" x:Name="dt">
+                    </ig:DataToolTipLayer>-->
+                    <ig:ItemToolTipLayer></ig:ItemToolTipLayer>
+                </igMaps:XamGeographicMap.Series>
+            </igMaps:XamGeographicMap>
+
+            <!-- "Select region..." block, bottom-left of the map (matches WPF selectRegionGrid) -->
+            <Grid x:Name="SelectRegionGrid" Background="#FFDDDDDD"
+                  HorizontalAlignment="Left" VerticalAlignment="Bottom" Padding="12,6">
+                <TextBlock Text="Select region to show only that region's figures" Style="{ThemeResource SmallTextSemibold}"
+                           Foreground="{StaticResource ForegroundBrushSecondary}" />
+            </Grid>
+            <!-- Trailing toggle group, bottom-right of the map (matches WPF Trailing block).
+                 ToggleButtons with manual mutual-exclusion in code-behind — matches the WPF
+                 segmented button look. RadioButton's default theme rendered the unchecked
+                 content text invisible against the white background. -->
+        </Grid>
+
+        <!-- =============================================================== -->
+        <!-- BOTTOM LEFT: Filter row + Overall Performance chart              -->
+        <!-- =============================================================== -->
+        <Grid Grid.Row="2" Grid.Column="0" Margin="0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Overall Performance chart with centered title overlay -->
+            <Grid Grid.Row="1" RowSpacing="{ThemeResource MediumGap}" Padding="{ThemeResource CardPadding}" CornerRadius="{ThemeResource CardCornerRadius}"  Background="{ThemeResource CardBackground}" BorderBrush="{ThemeResource CardBorderBrush}" BorderThickness="{ThemeResource CardBorderThickness}">
+                <!-- Title overlay matches WPF's TitleLegend with TitleTemplate inside the chart area. -->
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <TextBlock Text="Overall Performance" 
+                           IsHitTestVisible="False" Style="{ThemeResource CardTitleTextStyle}"/>
+                <ig:XamDataChart x:Name="OverallChart" Grid.Row="1"
+                                 MinHeight="150"
+                                 HighlightingMode="FadeOthersSpecific"
+                                 HighlightingBehavior="NearestItemsAndSeries"
+                                 HorizontalViewScrollbarMode="Persistent"
+                                 IsHorizontalZoomEnabled="True"
+                                 IsVerticalZoomEnabled="False"
+                                 ComputedPlotAreaMarginMode="Series"
+                                 ShouldAutoExpandMarginForInitialLabels="True"
+                                 ShouldConsiderAutoRotationForInitialLabels="True"
+                                 AutoMarginAndAngleUpdateMode="SizeChangingAndZoom">
+                    <ig:XamDataChart.Axes>
+                        <ig:OrdinalTimeXAxis x:Name="OverallXAxis" ItemsSource="{Binding Sales}" DateTimeMemberPath="Date" />
+                        <ig:NumericYAxis x:Name="OverallYAxis" AbbreviateLargeNumbers="True" />
+                    </ig:XamDataChart.Axes>
+                    <ig:XamDataChart.Series>
+                        <ig:AreaSeries x:Name="OverallSeries"
+                                       MarkerType="Circle"
+                                       Title="Overall Performance"
+                                       XAxis="{Binding ElementName=OverallXAxis}"
+                                       YAxis="{Binding ElementName=OverallYAxis}"
+                                       ItemsSource="{Binding Sales}"
+                                       ValueMemberPath="Value"
+                                       MarkerBrush="{StaticResource PrimaryBrushLightest}"
+                                       MarkerOutline="{StaticResource PrimaryBrush}"
+                                       Brush="{StaticResource PrimaryBrushLightest}"
+                                       Outline="{StaticResource PrimaryBrush}"
+                                       Thickness="1.5" />
+                        <ig:DataToolTipLayer x:Name="tooltip"></ig:DataToolTipLayer>
+                    </ig:XamDataChart.Series>
+                </ig:XamDataChart>
+            </Grid>
+        </Grid>
+
+        <!-- =============================================================== -->
+        <!-- RIGHT COLUMN: 3 stacked grids (Dealer 2*, Model 1.5*, Salesperson 2*) -->
+        <!-- Mirrors WPF RightColumnRoot. Spans both rows of the outer grid. -->
+        <!-- =============================================================== -->
+        <Grid x:Name="RightColumnRoot" Grid.Column="1" Grid.Row="1" Grid.RowSpan="2" RowSpacing="{ThemeResource MediumGap}">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+                <RowDefinition Height="*" />
+            </Grid.RowDefinitions>
+
+            <!-- Dealer Data Grid -->
+            <Grid Grid.Row="0" RowSpacing="{ThemeResource MediumGap}" Padding="{ThemeResource CardPadding}"  CornerRadius="{ThemeResource CardCornerRadius}" Background="{ThemeResource CardBackground}" BorderBrush="{ThemeResource CardBorderBrush}" BorderThickness="{ThemeResource CardBorderThickness}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel Spacing="4">
+                    <TextBlock Grid.Row="0" Text="Top Dealers"
+                           Style="{ThemeResource CardTitleTextStyle}"/>
+                    <TextBlock Text="Select dealer to show only that dealer's figures"
+                           Style="{ThemeResource SmallTextStyle}"/>
+                </StackPanel>
+                <igGrid:XamDataGrid Grid.Row="1" x:Name="DealerGrid"
+                                UseLayoutRounding="False"
+                                ItemsSource="{Binding DealersForGrid}"
+                                AutoGenerateColumns="False"
+                                RowHeight="42"
+                                BorderBrush="{StaticResource AppGridLineBrush}"
+                                BorderThickness="0"
+                                Background="{x:Null}"
+                                ActiveCellChanged="OnDealerActiveItemChanged">
+                    <igGrid:XamDataGrid.Columns>
+                        <igGrid:TextColumn    Field="Name" HeaderText="Dealer" >
+                            <igGrid:TextColumn.Width>
+                                <igGrid:ColumnWidth Value="1" IsStarSized="True">
+                                </igGrid:ColumnWidth>
+                            </igGrid:TextColumn.Width>
+                        </igGrid:TextColumn>
+                        <igGrid:TextColumn    Field="City"           HeaderText="Location" />
+                        <igGrid:NumericColumn Field="RevenuePercent" HeaderText="% of region revenue" />
+                    </igGrid:XamDataGrid.Columns>
+                </igGrid:XamDataGrid>
+            </Grid>
+
+
+            <!-- Model Performance -->
+
+
+            <Grid Grid.Row="1" RowSpacing="{ThemeResource MediumGap}" Padding="{ThemeResource CardPadding}"   CornerRadius="{ThemeResource CardCornerRadius}" Background="{ThemeResource CardBackground}" BorderBrush="{ThemeResource CardBorderBrush}" BorderThickness="{ThemeResource CardBorderThickness}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel Spacing="4">
+                    <TextBlock Text="Model Performance"
+                           Style="{ThemeResource CardTitleTextStyle}"/>
+                    <TextBlock Text="Revenue vs. target by model"
+                           Style="{ThemeResource SmallTextStyle}"/>
+                </StackPanel>
+                <igGrid:XamDataGrid Grid.Row="1" x:Name="ModelGrid"
+                                UseLayoutRounding="False"
+                                ItemsSource="{Binding CarModelPerformance}"
+                                AutoGenerateColumns="False"
+                                RowHeight="42"
+                                BorderBrush="{StaticResource AppGridLineBrush}"
+                                BorderThickness="0"
+                                Background="{x:Null}"
+                                Margin="0,2,0,0">
+                    <igGrid:XamDataGrid.Columns>
+                        <igGrid:TextColumn Field="Name" HeaderText="Model" />
+                        <igGrid:TemplateColumn Field="Sales"
+                                           HeaderText="Last week"
+                                           CellUpdating="OnSparklineCellUpdating"
+                                           CellStyleKeyRequested="OnSparklineCellStyleKeyRequested" />
+                        <igGrid:TemplateColumn Field="Percent"
+                                           HeaderText="Percentage of Target"
+                                           CellUpdating="OnBulletCellUpdating"
+                                           CellStyleKeyRequested="OnBulletCellStyleKeyRequested" />
+                    </igGrid:XamDataGrid.Columns>
+                </igGrid:XamDataGrid>
+            </Grid>
+
+            <!-- Salesperson Performance -->
+
+            <Grid Grid.Row="2" RowSpacing="{ThemeResource MediumGap}" Padding="{ThemeResource CardPadding}" CornerRadius="{ThemeResource CardCornerRadius}" Background="{ThemeResource CardBackground}" BorderBrush="{ThemeResource CardBorderBrush}" BorderThickness="{ThemeResource CardBorderThickness}">
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto" />
+                    <RowDefinition Height="*" />
+                </Grid.RowDefinitions>
+                <StackPanel Spacing="4">
+                    <TextBlock Grid.Row="0" Text="Salesperson Performance"
+                       Style="{ThemeResource CardTitleTextStyle}"/>
+                    <TextBlock Text="Revenue vs. target by salesperson"
+                           Style="{ThemeResource SmallTextStyle}"/>
+                </StackPanel>
+                <igGrid:XamDataGrid Grid.Row="1" x:Name="SalespersonGrid"
+                                UseLayoutRounding="False"
+                                ItemsSource="{Binding SalesPersonPerformance}"
+                                AutoGenerateColumns="False"
+                                RowHeight="42"
+                                BorderBrush="{StaticResource AppGridLineBrush}"
+                                BorderThickness="0"
+                                Background="{x:Null}"
+                                Margin="0,2,0,0">
+                    <igGrid:XamDataGrid.Columns>
+                        <igGrid:TextColumn Field="Name" HeaderText="Sales person" />
+                        <igGrid:TemplateColumn Field="Sales"
+                                           HeaderText="Last week"
+                                           CellUpdating="OnSparklineCellUpdating"
+                                           CellStyleKeyRequested="OnSparklineCellStyleKeyRequested" />
+                        <igGrid:TemplateColumn Field="Percent"
+                                           HeaderText="Percentage of Target"
+                                           CellUpdating="OnBulletCellUpdating"
+                                           CellStyleKeyRequested="OnBulletCellStyleKeyRequested" />
+                    </igGrid:XamDataGrid.Columns>
+                </igGrid:XamDataGrid>
+            </Grid>
+
+        </Grid>
+    </Grid>
+</UserControl>

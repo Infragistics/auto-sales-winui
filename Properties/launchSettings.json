@@ -1,0 +1,12 @@
+{
+  "profiles": {
+    "AutoSales (Package)": {
+      "commandName": "MsixPackage",
+      "nativeDebugging": true
+    },
+    "AutoSales (Unpackaged)": {
+      "commandName": "Project",
+      "nativeDebugging": true
+    }
+  }
+}

@@ -1,0 +1,58 @@
+<?xml version="1.0" encoding="utf-8"?>
+<Window
+    x:Class="AutoSales.MainWindow"
+    xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+    xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+    xmlns:d="http://schemas.microsoft.com/expression/blend/2008"
+    xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006"
+    xmlns:views="using:AutoSales.Views"
+    Title="Auto Sales Dashboard"
+    mc:Ignorable="d">
+    <Grid Background="{ThemeResource AppBackgroundBrush}" UseLayoutRounding="False">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto" />
+            <RowDefinition Height="*" />
+        </Grid.RowDefinitions>
+
+        <!-- Custom title bar (extends into the system chrome area).
+             LeftPaddingColumn / RightPaddingColumn reserve space for the system caption
+             buttons (min/max/close) that WinUI still draws on top of our content. -->
+        <Grid x:Name="AppTitleBar" Grid.Row="0" Background="{ThemeResource AppHeaderBrush}" Height="80">
+            <Grid.ColumnDefinitions>
+                <ColumnDefinition Width="*" />
+                <ColumnDefinition Width="Auto" />
+            </Grid.ColumnDefinitions>
+
+            <!-- Title block (left) -->
+            <StackPanel Grid.Column="0" Orientation="Horizontal" Padding="24,0,0,0" VerticalAlignment="Center">
+                <Border Height="40" Width="40" Background="{ThemeResource PrimaryBrush}" CornerRadius="13">
+                    <Image Source="Assets/car.svg" Width="24" Height="24"/>
+                </Border>
+                <StackPanel Orientation="Vertical" Padding="16,0,0,0" Spacing="2"
+                        VerticalAlignment="Center">
+                    <TextBlock Text="Auto Sales Dashboard"
+                           Foreground="{ThemeResource AppHeaderForegroundBrush}" FontWeight="SemiBold" FontSize="16"/>
+                    <TextBlock Text="Visualizing Sales Across United States"
+                           Foreground="{ThemeResource AppHeaderForegroundBrushSubtle}" FontSize="12"/>
+                </StackPanel>
+            </StackPanel>
+
+
+            <!-- Action items (right, before system chrome) -->
+            <StackPanel x:Name="TitleBarActions" Grid.Column="1" Orientation="Horizontal"
+                        VerticalAlignment="Center" Padding="0,0,24,0">
+                <HyperlinkButton x:Name="MapNavLink" Content="Map"
+                                 Foreground="{ThemeResource AppHeaderForegroundBrush}" Margin="0,0,8,0"
+                                 Click="OnMapNavClicked" />
+                <Button x:Name="InfoButton" Background="Transparent" BorderBrush="Transparent"
+                        Padding="6" Margin="4,0,0,0" Click="OnInfoClicked"
+                        ToolTipService.ToolTip="About">
+                    <FontIcon Glyph="&#xE946;" Foreground="{ThemeResource AppHeaderForegroundBrush}" FontSize="16" />
+                </Button>
+            </StackPanel>
+        </Grid>
+
+        <!-- Dashboard view -->
+        <views:DashboardView Grid.Row="1" />
+    </Grid>
+</Window>
