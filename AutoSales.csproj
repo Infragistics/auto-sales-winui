@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup>
     <OutputType>WinExe</OutputType>
     <TargetFramework>net9.0-windows10.0.19041.0</TargetFramework>
@@ -69,18 +69,18 @@
   </ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="Infragistics.WinUI.Core.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.Charts.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.DataVisualization.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.DataGrid.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.Layouts.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.Inputs.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.Gauges.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.Dashboards.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.TreeMap.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.Sparkline.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.Maps.Trial" Version="26.1.1000-alpha.12" />
-		<PackageReference Include="Infragistics.WinUI.SkiaSharp.Trial" Version="26.1.1000-alpha.12" />
+		<PackageReference Include="Infragistics.WinUI.Core.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.Charts.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.DataVisualization.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.DataGrid.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.Layouts.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.Inputs.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.Gauges.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.Dashboards.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.TreeMap.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.Sparkline.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.Maps.Trial" Version="26.1.1000-alpha.14" />
+		<PackageReference Include="Infragistics.WinUI.SkiaSharp.Trial" Version="26.1.1000-alpha.14" />
 	</ItemGroup>
 
 	<ItemGroup>
