@@ -16,6 +16,7 @@ namespace AutoSales
         {
             // Register Infragistics WinUI platform services (matches NewWinUISample pattern).
             Infragistics.Core.WinUIPlatformRegistration.Register();
+            Infragistics.SkiaSharpRenderer.Use();
             XamDataGrid.IsCanvasModeDisabled = true;
 
             _window = new MainWindow();
