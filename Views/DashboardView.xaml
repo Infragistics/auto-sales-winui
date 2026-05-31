@@ -25,10 +25,11 @@
         <cnv:BoolToColorConverter x:Key="BoolToColorConverter" />
 
         <DataTemplate x:Key="MapToolTip">
-            <StackPanel Background="Transparent" Orientation="Horizontal">
+            <StackPanel Background="Transparent" Orientation="Horizontal" Margin="5">
                 <TextBlock Text="{Binding Item.Name}" Foreground="Black"></TextBlock>
-                <TextBlock Text=": " Foreground="Black"></TextBlock>
-                <TextBlock Text="{Binding Item.RevenueFraction}" Foreground="Black"></TextBlock>
+                <TextBlock Text=": " Foreground="Black" Margin="0, 0, 10, 0"></TextBlock>
+                <TextBlock Text="{Binding Item.RevenuePercent}" Foreground="Black"></TextBlock>
+                <TextBlock Text="%" Foreground="Black"></TextBlock>
             </StackPanel>
         </DataTemplate>
     </UserControl.Resources>
@@ -132,6 +133,7 @@
                 <igMaps:XamGeographicMap.Series>
                     <igMaps:GeographicShapeSeries x:Name="RegionsSeries"
                                                   Title="Region"
+                                                  FillMemberPath="RevenueFraction"
                                                   ItemSearchMode="ClosestPointOnClosestShape"
                                                   Brush="{StaticResource ShapeFill20}"
                                                   Outline="{StaticResource AppRegionStrokeBrush}"
@@ -139,9 +141,23 @@
                                                   ItemsSource="{Binding VisibleRegions}"
                                                   ShapeMemberPath="Shape"
                                                   Visibility="{Binding RegionSeriesVisibility, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                  IsHitTestVisible="True" ChartToolTipUpdating="RegionsSeries_ChartToolTipUpdating" />
+                                                  IsHitTestVisible="True" ChartToolTipUpdating="RegionsSeries_ChartToolTipUpdating" >
+                        <igMaps:GeographicShapeSeries.FillScale>
+                            <ig:ValueBrushScale MaximumValue="{Binding MaxRevenueFraction}"
+    MinimumValue="{Binding MinRevenueFraction}"
+    IsLogarithmic="False" >
+                                <ig:ValueBrushScale.Brushes>
+                                    <igc:BrushCollection>
+                                        <SolidColorBrush Color="{StaticResource Gray800}" />
+                                        <SolidColorBrush Color="{StaticResource Gray300}" />
+                                    </igc:BrushCollection>
+                                </ig:ValueBrushScale.Brushes>
+                            </ig:ValueBrushScale>
+                        </igMaps:GeographicShapeSeries.FillScale>
+                    </igMaps:GeographicShapeSeries>
                     <igMaps:GeographicShapeSeries x:Name="StatesSeries"
                                                   Title="State"
+                                                  FillMemberPath="RevenueFraction"
                                                   ItemSearchMode="ClosestPointOnClosestShape"
                                                   Brush="{StaticResource ShapeFill30}"
                                                   Outline="{StaticResource AppRegionStrokeBrush}"
@@ -149,7 +165,20 @@
                                                   ItemsSource="{Binding VisibleUSStates}"
                                                   ShapeMemberPath="Shape"
                                                   Visibility="{Binding USStatesSeriesVisibility, Converter={StaticResource BoolToVisibilityConverter}}"
-                                                  IsHitTestVisible="True" ChartToolTipUpdating="StatesSeries_ChartToolTipUpdating" />
+                                                  IsHitTestVisible="True" ChartToolTipUpdating="StatesSeries_ChartToolTipUpdating" >
+                        <igMaps:GeographicShapeSeries.FillScale>
+                            <ig:ValueBrushScale MaximumValue="{Binding MaxRevenueFraction}"
+MinimumValue="{Binding MinRevenueFraction}"
+IsLogarithmic="False" >
+                                <ig:ValueBrushScale.Brushes>
+                                    <igc:BrushCollection>
+                                        <SolidColorBrush Color="{StaticResource Gray800}" />
+                                        <SolidColorBrush Color="{StaticResource Gray300}" />
+                                    </igc:BrushCollection>
+                                </ig:ValueBrushScale.Brushes>
+                            </ig:ValueBrushScale>
+                        </igMaps:GeographicShapeSeries.FillScale>
+                    </igMaps:GeographicShapeSeries>
                     <igMaps:GeographicProportionalSymbolSeries x:Name="DealersSeries"
                                                    Title="Dealer"
                                                    ItemsSource="{Binding DealersForMap}"
@@ -293,7 +322,7 @@
                             </igGrid:TextColumn.Width>
                         </igGrid:TextColumn>
                         <igGrid:TextColumn    Field="City"           HeaderText="Location" />
-                        <igGrid:NumericColumn Field="RevenuePercent" HeaderText="% of region revenue" />
+                        <igGrid:NumericColumn Field="RevenuePercent" HeaderText="% of region revenue" IsPercent="True" MaxFractionDigits="2" />
                     </igGrid:XamDataGrid.Columns>
                 </igGrid:XamDataGrid>
             </Grid>

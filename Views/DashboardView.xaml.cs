@@ -193,6 +193,7 @@ namespace AutoSales.Views
                 x.LabelVisibility = Infragistics.Core.Visibility.Collapsed;
                 var y = new NumericYAxis();
                 y.LabelVisibility = Infragistics.Core.Visibility.Collapsed;
+                y.MajorStroke = new SolidColorBrush(Colors.Transparent);
                 spark.Axes.Add(x);
                 spark.Axes.Add(y);
                 var series = new AreaSeries
